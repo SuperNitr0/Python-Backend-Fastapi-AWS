@@ -3,6 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
+      - dev
       - main
 
 jobs:
@@ -20,7 +21,7 @@ jobs:
 
       - name: Log in to Amazon ECR
         run: |
-          aws ecr get-login-password --region <us-east-1> | docker login --username AWS --password-stdin ${{ secrets.ECR_ENDPOINT }}
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_ENDPOINT }}
 
       - name: Build Docker image
         run: |
