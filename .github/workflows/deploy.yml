@@ -1,0 +1,25 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Docker image
+        run: |
+          echo "${{ secrets.AWS_ACCESS_KEY_ID }}" | docker login --username AWS --password-stdin ${{ secrets.ECR_ENDPOINT }}
+          docker build -t ${{ secrets.ECR_REPOSITORY_DEV }} .
+
+      - name: Push Docker image to ECR
+        run: |
+          docker tag ${{ secrets.ECR_REPOSITORY_DEV }}:latest ${{ secrets.ECR_ENDPOINT }}/${{ secrets.ECR_REPOSITORY_DEV }}:latest
+          docker push ${{ secrets.ECR_ENDPOINT }}/${{ secrets.ECR_REPOSITORY_DEV }}:latest
