@@ -3,6 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
+      - dev
       - main
 
 jobs:
@@ -17,12 +18,22 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y awscli
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Log in to Amazon ECR
         run: |
-          aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin ${{ secrets.ECR_ENDPOINT }}
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_ENDPOINT }}
+
       - name: Build Docker image
         run: |
           docker build -t ${{ secrets.ECR_REPOSITORY_DEV }} .
+
       - name: Push Docker image to ECR
         run: |
           docker tag ${{ secrets.ECR_REPOSITORY_DEV }}:latest ${{ secrets.ECR_ENDPOINT }}/${{ secrets.ECR_REPOSITORY_DEV }}:latest
