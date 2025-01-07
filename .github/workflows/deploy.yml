@@ -13,27 +13,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install AWS CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
-
       - name: Configure AWS Credentials
-        run: |
-          echo "[default]" > ~/.aws/config
-          echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
-          echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
-          echo "region=us-east-1" >> ~/.aws/config
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      - name: Log in to Amazon ECR
+      - name: Authenticate Docker with ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_ENDPOINT }}
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
 
-      - name: Build Docker image
+      - name: Tag and Push Backend Image
         run: |
-          docker build -t ${{ secrets.ECR_REPOSITORY_DEV }} .
+          docker tag my-web-app-backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
 
-      - name: Push Docker image to ECR
+      - name: Tag and Push Frontend Image
         run: |
-          docker tag ${{ secrets.ECR_REPOSITORY_DEV }}:latest ${{ secrets.ECR_ENDPOINT }}/${{ secrets.ECR_REPOSITORY_DEV }}:latest
-          docker push ${{ secrets.ECR_ENDPOINT }}/${{ secrets.ECR_REPOSITORY_DEV }}:latest
+          docker tag my-web-app-frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
